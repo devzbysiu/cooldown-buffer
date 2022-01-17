@@ -9,20 +9,21 @@ struct StartTimerMsg;
 
 pub fn cooldown_buffer<T: Clone + Debug + Send>(
     cooldown_time: Duration,
-) -> (CooldownSender<T>, Receiver<Vec<T>>)
+) -> (Sender<T>, Receiver<Vec<T>>)
 where
     T: 'static + Clone + Debug + Send,
 {
-    let (item_tx, _) = channel::<T>();
+    let (item_tx, item_rx) = channel::<T>();
     let (timer_tx, timer_rx) = channel::<StartTimerMsg>();
     let timer = ThreadTimer::new();
-    let results = Arc::new(Mutex::new(Vec::new()));
+    let items = Arc::new(Mutex::new(Vec::new()));
     let (buffered_tx, buffered_rx) = channel::<Vec<T>>();
 
+    let res = items.clone();
     std::thread::spawn(move || loop {
         let _ = timer_rx.recv();
         let _ = timer.cancel();
-        let r = results.clone();
+        let r = res.clone();
         let bx = buffered_tx.clone();
         let _ = timer.start(cooldown_time, move || {
             bx.send(r.lock().unwrap().clone()).unwrap();
@@ -31,22 +32,13 @@ where
         });
     });
 
-    (CooldownSender { item_tx, timer_tx }, buffered_rx)
-}
+    std::thread::spawn(move || loop {
+        if let Ok(num) = item_rx.recv() {
+            println!("[[<<]]: get num: {:?}", num);
+            timer_tx.send(StartTimerMsg).unwrap();
+            items.lock().unwrap().push(num);
+        }
+    });
 
-pub struct CooldownSender<T> {
-    item_tx: Sender<T>,
-    timer_tx: Sender<StartTimerMsg>,
-}
-
-impl<T> CooldownSender<T>
-where
-    T: 'static + Clone + Debug + Send,
-{
-    pub fn send(&self, item: T) -> Result<(), std::sync::mpsc::SendError<T>> {
-        self.timer_tx
-            .send(StartTimerMsg)
-            .expect("failed to send start timer message");
-        self.item_tx.send(item)
-    }
+    (item_tx, buffered_rx)
 }
