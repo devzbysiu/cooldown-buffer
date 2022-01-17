@@ -5,9 +5,6 @@ use std::thread;
 use std::time::Duration;
 use thread_timer::ThreadTimer;
 
-#[derive(Debug, Clone)]
-struct StartTimerMsg;
-
 pub fn cooldown_buffer<T: Clone + Debug + Send>(
     cooldown_time: Duration,
 ) -> (Sender<T>, Receiver<Vec<T>>)
@@ -15,7 +12,7 @@ where
     T: 'static + Clone + Debug + Send,
 {
     let (item_tx, item_rx) = channel::<T>();
-    let (timer_tx, timer_rx) = channel::<StartTimerMsg>();
+    let (timer_tx, timer_rx) = channel::<()>();
     let timer = ThreadTimer::new();
     let items = Arc::new(Mutex::new(Vec::new()));
     let (buffered_tx, buffered_rx) = channel::<Vec<T>>();
@@ -36,7 +33,7 @@ where
     thread::spawn(move || loop {
         if let Ok(num) = item_rx.recv() {
             println!("[[<<]]: get num: {:?}", num);
-            timer_tx.send(StartTimerMsg).unwrap();
+            timer_tx.send(()).unwrap();
             items.lock().unwrap().push(num);
         }
     });
