@@ -24,17 +24,16 @@ where
         let items = cloned_items.clone();
         let bx = buffered_tx.clone();
         let _ = timer.start(cooldown_time, move || {
-            bx.send(items.lock().unwrap().clone()).unwrap();
-            println!("[[-]]: flushing with {:?}", items.lock().unwrap());
-            items.lock().unwrap().clear();
+            bx.send(items.lock().expect("poisoned mutex").clone())
+                .expect("failed to send buffered items");
+            items.lock().expect("poisoned mutex").clear();
         });
     });
 
     thread::spawn(move || loop {
-        if let Ok(num) = item_rx.recv() {
-            println!("[[<<]]: get num: {:?}", num);
+        if let Ok(item) = item_rx.recv() {
             timer_tx.send(()).unwrap();
-            items.lock().unwrap().push(num);
+            items.lock().expect("poisoned mutex").push(item);
         }
     });
 
