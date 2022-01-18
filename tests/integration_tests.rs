@@ -32,7 +32,7 @@ fn it_works() {
 
     tx.send(7).unwrap();
     tx.send(8).unwrap();
-    // cooldown time didn't pass yet, so we won'thave items in rx
+    // cooldown time didn't pass yet, so we won't have items in rx
     let res = rx.try_recv();
 
     // then
