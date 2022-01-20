@@ -12,9 +12,9 @@ pub enum CooldownError {
     ItemRecvError(#[from] RecvError),
 }
 
-pub fn cooldown_buffer<T: Clone + Debug + Send>(
-    cooldown_time: Duration,
-) -> (Sender<T>, Receiver<Vec<T>>)
+#[must_use]
+#[allow(clippy::missing_panics_doc)] // TODO: get rid of this
+pub fn cooldown_buffer<T>(cooldown_time: Duration) -> (Sender<T>, Receiver<Vec<T>>)
 where
     T: 'static + Clone + Debug + Send,
 {
