@@ -30,4 +30,5 @@ documentation = ""
 [dependencies]
 log = "0.4.11"
 pretty_env_logger = "0.4.0"
+thiserror = "1.0.30"
 thread_timer = "0.3.0"

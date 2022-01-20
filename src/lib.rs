@@ -1,9 +1,16 @@
 use std::fmt::Debug;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, RecvError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+use thiserror::Error;
 use thread_timer::ThreadTimer;
+
+#[derive(Debug, Error)]
+pub enum CooldownError {
+    #[error("failed to receive item")]
+    ItemRecvError(#[from] RecvError),
+}
 
 pub fn cooldown_buffer<T: Clone + Debug + Send>(
     cooldown_time: Duration,
@@ -18,16 +25,22 @@ where
     let (buffered_tx, buffered_rx) = channel::<Vec<T>>();
 
     let cloned_items = items.clone();
-    thread::spawn(move || loop {
-        let _ = timer_rx.recv();
-        let _ = timer.cancel();
-        let items = cloned_items.clone();
-        let bx = buffered_tx.clone();
-        let _ = timer.start(cooldown_time, move || {
-            bx.send(items.lock().expect("poisoned mutex").clone())
-                .expect("failed to send buffered items");
-            items.lock().expect("poisoned mutex").clear();
-        });
+    thread::spawn(move || -> Result<(), CooldownError> {
+        loop {
+            timer_rx.recv()?;
+
+            // I don't care if the cancel failed. It can fail only if there is no running
+            // timer, which is file from cancelling point of view - I just want
+            // to have not running timer.
+            let _ = timer.cancel();
+            let items = cloned_items.clone();
+            let bx = buffered_tx.clone();
+            let _ = timer.start(cooldown_time, move || {
+                bx.send(items.lock().expect("poisoned mutex").clone())
+                    .expect("failed to send buffered items");
+                items.lock().expect("poisoned mutex").clear();
+            });
+        }
     });
 
     thread::spawn(move || loop {
