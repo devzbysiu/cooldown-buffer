@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::sync::mpsc::{channel, Receiver, RecvError, Sender};
+use std::sync::mpsc::{channel, Receiver, RecvError, SendError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -10,10 +10,12 @@ use thread_timer::ThreadTimer;
 pub enum CooldownError {
     #[error("failed to receive item")]
     ItemRecvError(#[from] RecvError),
+
+    #[error("failed to send item")]
+    ItemSendError(#[from] SendError<()>),
 }
 
 #[must_use]
-#[allow(clippy::missing_panics_doc)] // TODO: get rid of this
 pub fn cooldown_buffer<T>(cooldown_time: Duration) -> (Sender<T>, Receiver<Vec<T>>)
 where
     T: 'static + Clone + Debug + Send,
@@ -43,10 +45,12 @@ where
         }
     });
 
-    thread::spawn(move || loop {
-        if let Ok(item) = item_rx.recv() {
-            timer_tx.send(()).unwrap();
-            items.lock().expect("poisoned mutex").push(item);
+    thread::spawn(move || -> Result<(), CooldownError> {
+        loop {
+            if let Ok(item) = item_rx.recv() {
+                timer_tx.send(())?;
+                items.lock().expect("poisoned mutex").push(item);
+            }
         }
     });
 
