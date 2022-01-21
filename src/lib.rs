@@ -32,7 +32,7 @@ where
             timer_rx.recv()?;
 
             // I don't care if the cancel failed. It can fail only if there is no running
-            // timer, which is file from cancelling point of view - I just want
+            // timer, which is fine from cancelling point of view - I just want
             // to have not running timer.
             let _ = timer.cancel();
             let items = cloned_items.clone();
