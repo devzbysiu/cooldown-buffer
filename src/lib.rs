@@ -1,3 +1,7 @@
+// #![deny(missing_docs)] // TODO: uncomment this
+#![doc(html_root_url = "https://docs.rs/cooldown-buffer/0.1.0")]
+
+use doc_comment::doctest;
 use std::fmt::Debug;
 use std::sync::mpsc::{channel, Receiver, RecvError, SendError, Sender};
 use std::sync::{Arc, Mutex};
@@ -5,6 +9,8 @@ use std::thread;
 use std::time::Duration;
 use thiserror::Error;
 use thread_timer::ThreadTimer;
+
+doctest!("../README.md");
 
 #[derive(Debug, Error)]
 pub enum CooldownError {

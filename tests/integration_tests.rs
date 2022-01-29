@@ -1,4 +1,5 @@
 use cooldown_buffer::cooldown_buffer;
+// use doc_comment::doctest;
 use std::thread;
 use std::time::Duration;
 
