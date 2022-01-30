@@ -18,14 +18,14 @@ name = "cooldown-buffer"
 version = "0.1.0"
 authors = ["Bartosz Zbytniewski <bartosz.zbytniewski.dev@gmail.com>"]
 edition = "2021"
-description = ""
+description = "Buffers items as long as there is something happening on the channel"
 repository = "https://github.com/devzbysiu/cooldown-buffer"
 license = "MIT/Apache-2.0"
 readme = "README.md"
-keywords = []
-categories = []
-homepage = ""
-documentation = ""
+keywords = ["buffer", "channel", "cooldown", "timer"]
+categories = ["concurrency"]
+homepage = "https://github.com/devzbysiu/cooldown-buffer"
+documentation = "https://docs.rs/cooldown-buffer"
 
 [dependencies]
 log = "0.4.11"
