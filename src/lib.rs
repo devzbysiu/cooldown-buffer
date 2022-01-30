@@ -1,4 +1,4 @@
-// #![deny(missing_docs)]
+#![deny(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/cooldown-buffer/0.1.0")]
 
 //! This library allows to buffer items sent through the channel until no more action is happening
@@ -68,16 +68,27 @@ doctest!("../README.md");
 /// item, or if there is an issue with sending buffered items.
 #[derive(Debug, Error)]
 pub enum CooldownError {
-    /// Happens when the receiving thread couldn't receive an item. This is just the wrapper over
+    /// Happens when the receiving channel couldn't receive an item. This is just the wrapper over
     /// [RecvError](std::sync::mpsc::RecvError). This error can occur for the same reasons as in
     /// case of `RecvError`.
     #[error("failed to receive item")]
     ItemRecvError(#[from] RecvError),
 
+    /// Happens when the channel couldn't send an item. This is just the wrapper over
+    /// [SendError](std::sync::mpsc::SendError). This error can occur for the same reasons as in
+    /// case of `SendError`.
     #[error("failed to send item")]
     ItemSendError(#[from] SendError<()>),
 }
 
+/// Main and only function of this library. It starts the thread which receives the items, buffers
+/// them and controls the timer. Returns tuple `(Sender<T>, Receiver<Vec<T>>)`. You can send single
+/// item via `Sender<T>` and when the specified `cooldown_time` passes, you will get vector of
+/// buffered items back via `Receiver<Vec<T>>`.
+///
+/// # Arguments
+/// - cooldown_time - amount of time needed to "cool down" the receiving channel. After this time
+/// passes, the buffered items are sent through the `Receiver`
 #[must_use]
 pub fn cooldown_buffer<T>(cooldown_time: Duration) -> (Sender<T>, Receiver<Vec<T>>)
 where
