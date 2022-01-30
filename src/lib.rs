@@ -87,7 +87,8 @@ pub enum CooldownError {
 /// buffered items back via `Receiver<Vec<T>>`.
 ///
 /// # Arguments
-/// - cooldown_time - amount of time needed to "cool down" the receiving channel. After this time
+///
+/// - `cooldown_time` - amount of time needed to "cool down" the receiving channel. After this time
 /// passes, the buffered items are sent through the `Receiver`
 #[must_use]
 pub fn cooldown_buffer<T>(cooldown_time: Duration) -> (Sender<T>, Receiver<Vec<T>>)
