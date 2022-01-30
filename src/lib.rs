@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 #![doc(html_root_url = "https://docs.rs/cooldown-buffer/0.1.0")]
 
-//! This library allows to buffer items sent through the channel until no more action is happening
+//! This library allows buffering items sent through the channel until no more action is happening
 //! on this channel for a specified amount of time.
 //!
 //! # Example
@@ -45,7 +45,7 @@
 //!
 //! It uses one thread and two channels. First channel is used to send and receive single items.
 //! The Sender of this channel is handed to the user. Second channel is used to send and receive
-//! vector of items (buffered items). It's Receiver is handed to the user.
+//! vector of items (buffered items). Its Receiver is handed to the user.
 //!
 //! The thread receives items one at a time and pushes it to the vector. It then stops the timer
 //! and starts it again each time (this lib is using [ThreadTimer](thread_timer::ThreadTimer)).
