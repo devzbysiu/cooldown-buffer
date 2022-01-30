@@ -4,22 +4,6 @@
 //! This library allows to buffer items sent through the channel until no more action is happening
 //! on this channel for a specified amount of time.
 //!
-//! # Details
-//!
-//! It uses two threads and three channels to communicate between threads. First channel is used to
-//! send and receive single items. The Sender of this channel is handed to the user. Second
-//! channel is used to send and receive vector of items (buffered items). It's Receiver is handed
-//! to the user. Third channel is used to communicate between those two threads, let's call
-//! it the controll channel.
-//!
-//! First thread receives items one at a time and pushes it to the vector (shared between threads).
-//! It then uses controll channel to inform the second thread that the item was received.
-//!
-//! Second thread starts the timer using [ThreadTimer](thread_timer::ThreadTimer) every time, it
-//! gets the signal from the first thread via controll channel. When the time is up, the timer
-//! sends the cloned vector via third channel and clears the original one to make it ready for next
-//! buffering.
-//!
 //! # Example
 //! ```
 //! use std::time::Duration;
@@ -57,6 +41,17 @@
 //!     Ok(())
 //! }
 //! ```
+//! # Details
+//!
+//! It uses one thread and two channels. First channel is used to send and receive single items.
+//! The Sender of this channel is handed to the user. Second channel is used to send and receive
+//! vector of items (buffered items). It's Receiver is handed to the user.
+//!
+//! The thread receives items one at a time and pushes it to the vector. It then stops the timer
+//! and starts it again each time (this lib is using [ThreadTimer](thread_timer::ThreadTimer)).
+//! If the timer wasn't running then the error is ignored. If no more item appears for a specified
+//! amount of time, the timer sends the buffered items via second channel and clears the vector to
+//! make it ready for next buffering.
 
 use doc_comment::doctest;
 use std::fmt::Debug;
@@ -89,35 +84,27 @@ where
     T: 'static + Clone + Debug + Send,
 {
     let (item_tx, item_rx) = channel::<T>();
-    let (timer_tx, timer_rx) = channel::<()>();
     let timer = ThreadTimer::new();
     let items = Arc::new(Mutex::new(Vec::new()));
     let (buffered_tx, buffered_rx) = channel::<Vec<T>>();
 
-    let cloned_items = items.clone();
-    thread::spawn(move || -> Result<(), CooldownError> {
-        loop {
-            timer_rx.recv()?;
-
-            // I don't care if the cancel failed. It can fail only if there is no running
-            // timer, which is fine from cancelling point of view - I just want
-            // to have not running timer.
-            let _ = timer.cancel();
-            let items = cloned_items.clone();
-            let btx = buffered_tx.clone();
-            let _ = timer.start(cooldown_time, move || {
-                btx.send(items.lock().expect("poisoned mutex").clone())
-                    .expect("failed to send buffered items");
-                items.lock().expect("poisoned mutex").clear();
-            });
-        }
-    });
-
     thread::spawn(move || -> Result<(), CooldownError> {
         loop {
             if let Ok(item) = item_rx.recv() {
-                timer_tx.send(())?;
+                // I don't care if the cancel failed. It can fail only if there is no running
+                // timer, which is fine from cancelling point of view - I just want
+                // to have not running timer.
+                let _ = timer.cancel();
                 items.lock().expect("poisoned mutex").push(item);
+
+                let cloned_items = items.clone();
+                let btx = buffered_tx.clone();
+
+                let _ = timer.start(cooldown_time, move || {
+                    btx.send(cloned_items.lock().expect("poisoned mutex").clone())
+                        .expect("failed to send buffered items");
+                    cloned_items.lock().expect("poisoned mutex").clear();
+                });
             }
         }
     });
