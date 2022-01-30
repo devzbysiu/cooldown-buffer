@@ -37,16 +37,15 @@
 
 # <p id="about">About</p>
 
-This is very small library which allows to buffer items send through a channel until the channel
+This is very small library which allows buffering items send through a channel until the channel
 have a time to "cool down".
 
 I used this code when I wanted to group new files appearing on the FS. Imagine this: you are
 scanning some document pages on your printer and you want to treat scanned pages as one document.
 It's very hard to group those without knowing the content of the pages and without being able to
 tell that the pages are related to the same doc. So I took different approach and assumed that if
-new documents are constantly appearing then it's probably the same document. When the duration
-between appearance of new files is bigger than X then the scan of the document was probably
-finished.
+new documents constantly appear then it's probably the same document. When the duration between
+appearance of new files is bigger than X, then the scan of the document was probably finished.
 
 # <p id="example">Example</p>
 
