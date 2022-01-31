@@ -55,31 +55,13 @@
 
 use doc_comment::doctest;
 use std::fmt::Debug;
-use std::sync::mpsc::{channel, Receiver, RecvError, SendError, Sender};
+use std::sync::mpsc::{channel, Receiver, RecvError, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use thiserror::Error;
 use thread_timer::ThreadTimer;
 
 doctest!("../README.md");
-
-/// Specifies possible errors. Errors happen only when there is an issue with receiving single
-/// item, or if there is an issue with sending buffered items.
-#[derive(Debug, Error)]
-pub enum CooldownError {
-    /// Happens when the receiving channel couldn't receive an item. This is just the wrapper over
-    /// [RecvError](std::sync::mpsc::RecvError). This error can occur for the same reasons as in
-    /// case of `RecvError`.
-    #[error("failed to receive item")]
-    ItemRecvError(#[from] RecvError),
-
-    /// Happens when the channel couldn't send an item. This is just the wrapper over
-    /// [SendError](std::sync::mpsc::SendError). This error can occur for the same reasons as in
-    /// case of `SendError`.
-    #[error("failed to send item")]
-    ItemSendError(#[from] SendError<()>),
-}
 
 /// Main and only function of this library. It starts the thread which receives the items, buffers
 /// them and controls the timer. Returns tuple `(Sender<T>, Receiver<Vec<T>>)`. You can send single
@@ -100,24 +82,23 @@ where
     let items = Arc::new(Mutex::new(Vec::new()));
     let (buffered_tx, buffered_rx) = channel::<Vec<T>>();
 
-    thread::spawn(move || -> Result<(), CooldownError> {
+    thread::spawn(move || -> Result<(), RecvError> {
         loop {
-            if let Ok(item) = item_rx.recv() {
-                // I don't care if the cancel failed. It can fail only if there is no running
-                // timer, which is fine from cancelling point of view - I just want
-                // to have not running timer.
-                let _ = timer.cancel();
-                items.lock().expect("poisoned mutex").push(item);
+            let item = item_rx.recv()?;
+            // I don't care if the cancel failed. It can fail only if there is no running
+            // timer, which is fine from cancelling point of view - I just want
+            // to have not running timer.
+            let _ = timer.cancel();
+            items.lock().expect("poisoned mutex").push(item);
 
-                let cloned_items = items.clone();
-                let btx = buffered_tx.clone();
+            let cloned_items = items.clone();
+            let btx = buffered_tx.clone();
 
-                let _ = timer.start(cooldown_time, move || {
-                    btx.send(cloned_items.lock().expect("poisoned mutex").clone())
-                        .expect("failed to send buffered items");
-                    cloned_items.lock().expect("poisoned mutex").clear();
-                });
-            }
+            let _ = timer.start(cooldown_time, move || {
+                btx.send(cloned_items.lock().expect("poisoned mutex").clone())
+                    .expect("failed to send buffered items");
+                cloned_items.lock().expect("poisoned mutex").clear();
+            });
         }
     });
 
