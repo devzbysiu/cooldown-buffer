@@ -7,17 +7,11 @@
   </h3>
 
   <p>
-   <img src="https://github.com/devzbysiu/cooldown-buffer/workflows/ci/badge.svg" alt="CI status
-    badge" />
+    <img src="https://img.shields.io/github/workflow/status/devzbysiu/cooldown-buffer/ci?style=for-the-badge" alt="CI status badge" />
     <a href="https://codecov.io/gh/devzbysiu/cooldown-buffer">
       <img src="https://img.shields.io/codecov/c/github/devzbysiu/cooldown-buffer?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="Code coverage"/>
     </a>
-    <a href="https://crates.io/crates/cooldown-buffer">
-      <img src="https://img.shields.io/crates/l/cooldown-buffer?style=for-the-badge" alt="License"/>
-    </a>
-    <a href="https://docs.rs/cooldown-buffer">
-      <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=for-the-badge" alt="docs.rs docs" />
-    </a>
+    <img src="https://img.shields.io/badge/license-MIT%2FAPACHE--2.0-blue?style=for-the-badge" alt="License"/>
   </p>
 
   <h3>
@@ -92,7 +86,7 @@ fn main() -> Result<()> {
 Add as a dependency to your `Cargo.toml`:
 ```toml
 [dependencies]
-cooldown-buffer = "0.1.0"
+cooldown-buffer = { git = "https://github.com/devzbysiu/cooldown-buffer", rev = "e2961ca" }
 ```
 
 # <p id="license">License</p>
