@@ -3,7 +3,7 @@
   <h1><code>cooldown-buffer</code></h1>
 
   <h3>
-    <strong>Buffers items send through channel until noting happens for specified time</strong>
+    <strong>Buffers items send through channel until nothing happens for specified time</strong>
   </h3>
 
   <p>
