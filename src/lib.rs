@@ -73,11 +73,13 @@ doctest!("../README.md");
 /// - `cooldown_time` - amount of time needed to "cool down" the receiving channel. After this time
 /// passes, the buffered items are sent through the `Receiver`
 #[must_use]
-pub fn cooldown_buffer<T>(cooldown_time: Duration) -> (Sender<T>, Receiver<Vec<T>>)
+pub fn cooldown_buffer<T>(
+    (item_tx, item_rx): (Sender<T>, Receiver<T>),
+    cooldown_time: Duration,
+) -> (Sender<T>, Receiver<Vec<T>>)
 where
     T: 'static + Clone + Debug + Send,
 {
-    let (item_tx, item_rx) = channel::<T>();
     let timer = ThreadTimer::new();
     let items = Arc::new(Mutex::new(Vec::new()));
     let (buffered_tx, buffered_rx) = channel::<Vec<T>>();
@@ -112,7 +114,7 @@ mod test {
     #[test]
     fn it_works() {
         // given
-        let (tx, rx) = cooldown_buffer(Duration::from_millis(100));
+        let (tx, rx) = cooldown_buffer(channel(), Duration::from_millis(100));
 
         // when
         tx.send(1).unwrap();
