@@ -48,10 +48,11 @@ use std::time::Duration;
 use cooldown_buffer::cooldown_buffer;
 use std::thread;
 use anyhow::Result;
+use std::sync::mpsc::channel;
 
 fn main() -> Result<()> {
     // we set our buffer to cool down after 100 milliseconds
-    let (tx, rx) = cooldown_buffer::<u32>(Duration::from_millis(100));
+    let (tx, rx) = cooldown_buffer::<u32>(channel(), Duration::from_millis(100));
 
     thread::spawn(move || -> Result<()> {
       // then we send 4 items with delay of 90 milliseconds between each,
