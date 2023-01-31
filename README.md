@@ -7,7 +7,7 @@
   </h3>
 
   <p>
-    <img src="https://img.shields.io/github/workflow/status/devzbysiu/cooldown-buffer/ci?style=for-the-badge" alt="CI status badge" />
+    <img src="https://img.shields.io/github/actions/workflow/status/devzbysiu/cooldown-buffer/ci.yml?style=for-the-badge" alt="CI status badge" />
     <a href="https://codecov.io/gh/devzbysiu/cooldown-buffer">
       <img src="https://img.shields.io/codecov/c/github/devzbysiu/cooldown-buffer?style=for-the-badge&token=f2339b3de9e44be0a902458a669c1160" alt="Code coverage"/>
     </a>
